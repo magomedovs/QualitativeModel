@@ -1,0 +1,30 @@
+#!/bin/bash
+
+Travelingwavedir=$(pwd)
+paramList="ParametersList_with_variables_for_subs.prm"  # .prm file with the parameters should lie in the current directory.
+
+[ ! -d "build" ] && mkdir "build"               # if the directory doesn't exist, then create it
+cd build/                                       # enter the build/ directory
+builddir=$(pwd)
+
+delta=0.1
+
+T_left_array=($(seq 1.7 0.1 2.5))
+
+for T_left in ${T_left_array[@]}
+do
+
+  resdirname="delta_${delta}_Tl_${T_left}"
+  [ ! -d ${resdirname} ] && mkdir ${resdirname}   # if the directory doesn't exist, then create it
+
+  newparamList="Tl_${T_left}.prm"
+  cp ${Travelingwavedir}/${paramList} "${resdirname}/${newparamList}"
+  cd ${resdirname}
+
+  sed -i -e "s/delta_subs/${delta}/" -e "s/T_left_subs/${T_left}/" ${newparamList}    # replace parameter keys by explicit values
+
+  ${builddir}/Travelingwave ${newparamList}
+
+  cd ${builddir}
+
+done
