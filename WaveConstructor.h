@@ -92,7 +92,7 @@ namespace TravelingWave
 		void refine_mesh();
 		double run_newton_iterations(const double target_tolerance=1e-5);
 
-		void output_results_txt(const Vector<double> &solution, const double D_0, const std::string filename="solution");
+		void output_results_txt(const Vector<double> &solution, const double wave_speed, const std::string filename="solution");
 
 		unsigned int extended_solution_dim;
 		std::map<std::string, unsigned int> boundary_and_zero_dof_numbers;
@@ -117,8 +117,8 @@ namespace TravelingWave
 
 
 		Vector<double> 	current_solution;
-		double 					current_D_0;
-		Vector<double> 	current_solution_extended;		/* Solution with an additional term, corresponding to the velocity variable D_0. */
+		double 					current_wave_speed;
+		Vector<double> 	current_solution_extended;		/* Solution with an additional term, corresponding to the velocity variable wave_speed. */
 
 		Solution initial_guess;
 

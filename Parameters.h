@@ -19,14 +19,13 @@ namespace TravelingWave
     double T_ign;
     int wave_type;
     int T_r_bc_type;
-    int u_r_bc_type;
     double T_left, T_right;
     double u_left, u_right;
 
     // double del_Pr_eps;
     // double del_Le;
     
-    double D_0_init;
+    double wave_speed_init;
   };
 
   struct FiniteElements : ParameterAcceptor

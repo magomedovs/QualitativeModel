@@ -18,7 +18,7 @@ namespace TravelingWave
 
     void operator() (const state_type &x , state_type &dxdt , const double /* t */);
     void calculate_u_T_omega();
-    void set_D_0(double iD_0);
+    void set_wave_speed(double iwave_speed);
 
     std::vector<double> t_vec;
     std::vector<state_type> omega_vec;
@@ -35,7 +35,7 @@ namespace TravelingWave
 
     const Parameters &params;
     const Problem    &problem;
-    double D_0;
+    double wave_speed;
 
     const double lambda_0, u_0, T_0;  /* Initial values. */
     double A, B;                      /* Integration constants. */

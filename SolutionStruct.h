@@ -14,7 +14,7 @@ namespace TravelingWave
 	{
 		Solution();
 		Solution(const std::vector<double> &ix, const std::vector<double> &iu, 
-							const std::vector<double> &iT, const std::vector<double> &ilambda, const double iD_0);
+							const std::vector<double> &iT, const std::vector<double> &ilambda, const double iwave_speed);
 		Solution(const std::vector<double> &ix, const std::vector<double> &iu, 
 							const std::vector<double> &iT, const std::vector<double> &ilambda);
 
@@ -27,7 +27,7 @@ namespace TravelingWave
 		std::vector<double> T;
 		std::vector<double> lambda;
 
-		double D_0;
+		double wave_speed;
 	};
 
 }

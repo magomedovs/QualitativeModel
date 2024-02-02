@@ -18,14 +18,13 @@ namespace TravelingWave
     add_parameter("Type of the wave", wave_type = 1);
 
     add_parameter("Type of Temperature right boundary condition", T_r_bc_type = 1);
-    add_parameter("Type of Velocity right boundary condition", u_r_bc_type = 1);
 
     add_parameter("T_left", T_left = 4.13);
     add_parameter("T_right", T_right = 0.9);
     add_parameter("u_left", u_left = 0.);
     add_parameter("u_right", u_right = 0.);
 
-    add_parameter("D_0 initial value", D_0_init = 1.001);
+    add_parameter("wave_speed initial value", wave_speed_init = 1.001);
   }
 
   // void Problem::parse_parameters(ParameterHandler &)
@@ -33,7 +32,7 @@ namespace TravelingWave
   //   del_Pr_eps 	= Pr * 4 * delta / (3 * epsilon);
   //   del_Le 		= delta / Le;
 
-  //   // D_0_init = ( 1 + epsilon / 2 * (1 + 2 * std::sqrt(q)) ) * coef_for_D_0_init;
+  //   // wave_speed_init = ( 1 + epsilon / 2 * (1 + 2 * std::sqrt(q)) ) * coef_for_wave_speed_init;
   // }
 
   FiniteElements::FiniteElements()

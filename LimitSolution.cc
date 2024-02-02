@@ -6,7 +6,7 @@ namespace TravelingWave
   LimitSolution::LimitSolution(const Parameters &parameters, const double ilambda_0, const double iu_0, const double iT_0, const double iroot_sign)
     : params(parameters)
     , problem(params.problem)
-    , D_0(problem.D_0_init)
+    , wave_speed(problem.wave_speed_init)
     , lambda_0(ilambda_0)
     , u_0(iu_0)
     , T_0(iT_0)
@@ -22,12 +22,12 @@ namespace TravelingWave
 
   void LimitSolution::operator() (const state_type &x , state_type &dxdt , const double /* t */)
   {
-    dxdt[0] = -1. / D_0 * omega_func(x[0], T_func(x[0]));
+    dxdt[0] = -1. / wave_speed * omega_func(x[0], T_func(x[0]));
   }
 
   double LimitSolution::u_func(const double lambda) const
   {
-    double coef = 2 * (D_0 - 1) / problem.epsilon - 1;
+    double coef = 2 * (wave_speed - 1) / problem.epsilon - 1;
     return (coef + root_sign * std::sqrt(coef * coef - 4 * (problem.q * lambda + B - 2 * A / problem.epsilon))) / 2;
   }
 
@@ -39,12 +39,12 @@ namespace TravelingWave
   void LimitSolution::calculate_constants_A_B()
   {
     B = T_0 - u_0 - problem.q * lambda_0;
-    A = u_0 * (1 - D_0) + problem.epsilon * (u_0 * u_0  + T_0) / 2;
+    A = u_0 * (1 - wave_speed) + problem.epsilon * (u_0 * u_0  + T_0) / 2;
   }
 
-  void LimitSolution::set_D_0(double iD_0)
+  void LimitSolution::set_wave_speed(double iwave_speed)
   {
-    D_0 = iD_0;
+    wave_speed = iwave_speed;
     calculate_constants_A_B();
   }
 

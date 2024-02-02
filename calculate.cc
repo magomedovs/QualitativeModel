@@ -48,8 +48,8 @@ void calculate_and_save_solution(TravelingWave::Parameters& parameters,
 			}
 		}
 
-		std::vector<double> D_0_array;
-		D_0_array.reserve(delta_span.size());
+		std::vector<double> wave_speed_array;
+		wave_speed_array.reserve(delta_span.size());
 		Triangulation<1> tria;
 		bool first_iter_flag = true;
 
@@ -73,18 +73,18 @@ void calculate_and_save_solution(TravelingWave::Parameters& parameters,
 			wave.run(parameters.mesh.adaptive, parameters.mesh.refinements_number, parameters.solver.tol, filename);
 			wave.get_solution(sol);
 			wave.get_triangulation(tria);
-			D_0_array.push_back(sol.D_0);
+			wave_speed_array.push_back(sol.wave_speed);
 
 		}
 
 		{
-			const std::string file_for_solution = "delta_D_0.txt";
+			const std::string file_for_solution = "delta_wave_speed.txt";
 			std::ofstream output(file_for_solution);
 
 			output << std::scientific << std::setprecision(16);
 			for (unsigned int i = 0; i < delta_span.size(); ++i)
 			{
-				output << std::scientific << delta_span[i] << " " << D_0_array[i] << "\n";
+				output << std::scientific << delta_span[i] << " " << wave_speed_array[i] << "\n";
 			}
 			output.close();
 		}
@@ -97,9 +97,9 @@ void calculate_and_save_solution(TravelingWave::Parameters& parameters,
 		double T_r = sol.T[sol_length-1];
 		double u_l = sol.u[0];
 		double T_l = sol.T[0];
-		double D_0 = sol.D_0;
+		double wave_speed = sol.wave_speed;
 
-		double residual_1 = ( u_r * (1 - D_0) + parameters.problem.epsilon / 2 * (u_r * u_r + T_r) ) - ( u_l * (1 - D_0) + parameters.problem.epsilon / 2 * (u_l * u_l + T_l) );
+		double residual_1 = ( u_r * (1 - wave_speed) + parameters.problem.epsilon / 2 * (u_r * u_r + T_r) ) - ( u_l * (1 - wave_speed) + parameters.problem.epsilon / 2 * (u_l * u_l + T_l) );
 		double residual_2 = (T_r - u_r + parameters.problem.q) - (T_l - u_l);
 
 		std::cout << "bc residual_1 = " << residual_1 << std::endl;

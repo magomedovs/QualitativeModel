@@ -40,7 +40,7 @@ namespace TravelingWave
 
 
 	void compute_limit_sol_left_part(const Parameters &parameters, 
-																		const double D_0, 
+																		const double wave_speed, 
 																		const double u_0, 
 																		const double T_0, 
 																		const double lambda_0, 
@@ -50,7 +50,7 @@ namespace TravelingWave
 		/* Computation of the limit case solution (corresponding to \delta = 0). */
 
 		LimitSolution limit_sol(parameters, lambda_0, u_0, T_0, root_sign);
-		limit_sol.set_D_0(D_0);
+		limit_sol.set_wave_speed(wave_speed);
 		
 		{
 			/* We take more integration points to better resolve the transition layer. */
@@ -86,7 +86,7 @@ namespace TravelingWave
 		SaveSolutionIntoFile(limit_sol.omega_vec, limit_sol.t_vec, "solution_omega_limit.txt");
 
 		LimitSol.reinit(limit_sol.t_vec.size());
-		LimitSol.D_0 = D_0;
+		LimitSol.wave_speed = wave_speed;
 		for (unsigned int i=0; i < limit_sol.t_vec.size(); ++i)
 		{
 			LimitSol.x[i] = limit_sol.t_vec[i];
@@ -101,7 +101,7 @@ namespace TravelingWave
 	void compute_initial_guess_ode(const Parameters &params, Solution &initial_guess, const double root_sign)
 	{
 		const Problem &problem = params.problem;
-		double current_D_0(problem.D_0_init);
+		double current_wave_speed(problem.wave_speed_init);
 
 		double T_plus = 0.;
 		if (problem.T_left > problem.T_ign + problem.q + std::sqrt(problem.q))  /* Detonation case */
@@ -116,16 +116,16 @@ namespace TravelingWave
 		{
 			double DeltaT = problem.T_left - T_plus;
 			double qDT = problem.q - DeltaT;
-			current_D_0 = 1. + problem.epsilon * (problem.u_right - (qDT * qDT + DeltaT) / (2 * qDT));
+			current_wave_speed = 1. + problem.epsilon * (problem.u_right - (qDT * qDT + DeltaT) / (2 * qDT));
 		}
 
 		double lambda_0 = 0.;
 		double u_0 = problem.u_right;
 		double T_0 = T_plus;
 
-		compute_limit_sol_left_part(params, current_D_0, u_0, T_0, lambda_0, initial_guess, root_sign);
+		compute_limit_sol_left_part(params, current_wave_speed, u_0, T_0, lambda_0, initial_guess, root_sign);
 
-		initial_guess.D_0 = current_D_0;
+		initial_guess.wave_speed = current_wave_speed;
 
 		for (int i = initial_guess.x.size() - 1; i > - 1; --i)
 		{
@@ -153,7 +153,7 @@ namespace TravelingWave
 	void compute_initial_guess_slow(const Parameters &params, Solution &initial_guess)
 	{
 		const Problem &problem = params.problem;
-		double current_D_0(problem.D_0_init);
+		double current_wave_speed(problem.wave_speed_init);
 
 		double del_Pr_eps = (problem.Pr * 4 * problem.delta / (3 * problem.epsilon));
 		double del_Le = (problem.delta / problem.Le);
@@ -187,7 +187,7 @@ namespace TravelingWave
 		auto lambda_init_guess_func = [=](double x) {
 			if (x < 0.)
 			{
-				return -std::exp(x * std::abs(1 - current_D_0) / del_Pr_eps) + 1;
+				return -std::exp(x * std::abs(1 - current_wave_speed) / del_Pr_eps) + 1;
 			}
 			else 
 			{
@@ -215,7 +215,7 @@ namespace TravelingWave
 		initial_guess.u = u_init_arr;
 		initial_guess.T = T_init_arr;
 		initial_guess.lambda = lambda_init_arr;
-		initial_guess.D_0 = current_D_0;
+		initial_guess.wave_speed = current_wave_speed;
 
 	}
 

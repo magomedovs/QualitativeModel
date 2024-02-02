@@ -64,7 +64,7 @@ namespace TravelingWave
 					FE_Q<1>(params.fe.poly_degree), 1,
 					FE_Q<1>(params.fe.poly_degree), 1)		/* 3 fe basis sets, corresponding to du, dT, dlambda */
 		, dof_handler(triangulation)
-		, current_D_0(0.)
+		, current_wave_speed(0.)
 		, initial_guess(initial_guess_input)
 		, computing_timer(std::cout, TimerOutput::never, TimerOutput::wall_times)
 	{
@@ -78,11 +78,11 @@ namespace TravelingWave
 		table.add_value("Parameter name", "epsilon");
 		table.add_value("value", params.problem.epsilon);
 		
-		table.add_value("Parameter name", "params.problem.D_0_init");
-		table.add_value("value", params.problem.D_0_init);
+		table.add_value("Parameter name", "params.problem.wave_speed_init");
+		table.add_value("value", params.problem.wave_speed_init);
 
-		table.add_value("Parameter name", "initial_guess.D_0");
-		table.add_value("value", initial_guess.D_0);
+		table.add_value("Parameter name", "initial_guess.wave_speed");
+		table.add_value("value", initial_guess.wave_speed);
 		
 		table.add_value("Parameter name", "T_left");
 		table.add_value("value", params.problem.T_left);
@@ -147,10 +147,7 @@ namespace TravelingWave
 	void WaveConstructor::set_boundary_and_zero_values()
 	{
 		// current_solution[boundary_and_zero_dof_numbers["u_left"]] = problem.u_left;
-		if (problem.u_r_bc_type == 1)	/* "Dirichlet" -- 1 */
-		{
-			current_solution[boundary_and_zero_dof_numbers["u_right"]] = problem.u_right;
-		} /* else is "Neumann" -- 0. */
+		current_solution[boundary_and_zero_dof_numbers["u_right"]] = problem.u_right;
 
 		current_solution[boundary_and_zero_dof_numbers["T_left"]] = problem.T_left;
 		if (problem.T_r_bc_type == 1)	/* "Dirichlet" -- 1 */
@@ -181,17 +178,9 @@ namespace TravelingWave
 
 		/* Boundary condition constraints for u. */
 		// zero_boundary_constraints.add_line(boundary_and_zero_dof_numbers["u_left"]);
-		// zero_boundary_constraints.set_inhomogeneity(boundary_and_zero_dof_numbers["u_left"], 0.);
-		if (problem.u_r_bc_type == 1)	/* "Dirichlet" -- 1 */
-		{
-			std::cout << "Dirichlet boundary conditions for Velocity at the right boundary." << std::endl;
-			zero_boundary_constraints.add_line(boundary_and_zero_dof_numbers["u_right"]);
-			zero_boundary_constraints.set_inhomogeneity(boundary_and_zero_dof_numbers["u_right"], 0.);
-		} /* else is "Neumann" -- 0, by default. */
-		else
-		{
-			std::cout << "Neumann boundary conditions for Velocity at the right boundary." << std::endl;
-		}
+		// zero_boundary_constraints.set_inhomogeneity(boundary_and_zero_dof_numbers["u_left"], 0.);		
+		zero_boundary_constraints.add_line(boundary_and_zero_dof_numbers["u_right"]);
+		zero_boundary_constraints.set_inhomogeneity(boundary_and_zero_dof_numbers["u_right"], 0.);
 
 		/* Boundary condition constraints for T. */
 		zero_boundary_constraints.add_line(boundary_and_zero_dof_numbers["T_left"]);
@@ -259,7 +248,7 @@ namespace TravelingWave
 
 	void WaveConstructor::set_initial_guess()
 	{
-		current_D_0 = initial_guess.D_0;
+		current_wave_speed = initial_guess.wave_speed;
 
 		Interpolant u_interpolant(initial_guess.x, initial_guess.u);
 		Interpolant T_interpolant(initial_guess.x, initial_guess.T);
@@ -275,7 +264,7 @@ namespace TravelingWave
 		{
 			current_solution_extended(i) = current_solution(i);
 		}
-		current_solution_extended(extended_solution_dim - 1) = current_D_0;
+		current_solution_extended(extended_solution_dim - 1) = current_wave_speed;
 
 	}
 
@@ -318,7 +307,7 @@ namespace TravelingWave
 				evaluation_point(i) = evaluation_point_extended(i);
 			}
 
-			const double D_0 = evaluation_point_extended(extended_solution_dim - 1);
+			const double wave_speed = evaluation_point_extended(extended_solution_dim - 1);
 
 			std::cout << "Computing Jacobian matrix ... " << std::endl;
 	
@@ -425,15 +414,15 @@ namespace TravelingWave
 
 								del_Pr_eps * (-grad_phi_u[i] * grad_phi_u[j])
 								+ phi_u[i] * (
-									- (1 - D_0 + problem.epsilon * current_velocity_values[q]) * grad_phi_u[j][0]
+									- (1 - wave_speed + problem.epsilon * current_velocity_values[q]) * grad_phi_u[j][0]
 									- problem.epsilon * current_velocity_gradients[q][0] * phi_u[j]
 									- problem.epsilon / 2. * grad_phi_T[j][0]
 								)
 								
 								+ problem.delta * (-grad_phi_T[i] * grad_phi_T[j])
 								+ phi_T[i] * (
-									- D_0 * grad_phi_u[j][0]
-									+ D_0 * grad_phi_T[j][0]
+									- wave_speed * grad_phi_u[j][0]
+									+ wave_speed * grad_phi_T[j][0]
 									+ problem.q * kappa_1(current_temperature_values[q], current_lambda_values[q]) * phi_T[j]
 									+ problem.q * kappa_2(current_temperature_values[q], current_lambda_values[q]) * phi_lambda[j]
 								)
@@ -441,7 +430,7 @@ namespace TravelingWave
 								+ del_Le * (-grad_phi_lambda[i] * grad_phi_lambda[j])
 								+ phi_lambda[i] * (
 									kappa_1(current_temperature_values[q], current_lambda_values[q]) * phi_T[j]
-									+ D_0 * grad_phi_lambda[j][0]
+									+ wave_speed * grad_phi_lambda[j][0]
 									+ kappa_2(current_temperature_values[q], current_lambda_values[q]) * phi_lambda[j]
 								)
 
@@ -540,7 +529,7 @@ namespace TravelingWave
 		  evaluation_point(i) = evaluation_point_extended(i);
 		}
 
-		const double D_0 = evaluation_point_extended(extended_solution_dim - 1);
+		const double wave_speed = evaluation_point_extended(extended_solution_dim - 1);
 
 		const QGauss<1> quadrature_formula(number_of_quadrature_points);
 		FEValues<1> fe_values(fe,
@@ -610,19 +599,19 @@ namespace TravelingWave
 
 						del_Pr_eps * (-grad_phi_u[i] * current_velocity_gradients[q])
 						+ phi_u[i] * (
-							- current_velocity_gradients[q][0] * (1 - D_0 + problem.epsilon * current_velocity_values[q]) 
+							- current_velocity_gradients[q][0] * (1 - wave_speed + problem.epsilon * current_velocity_values[q]) 
 							- problem.epsilon / 2. * current_temperature_gradients[q][0]
 						)
 
 						+ problem.delta * (-grad_phi_T[i] * current_temperature_gradients[q])
 						+ phi_T[i] * (
-							D_0 * (current_temperature_gradients[q][0] - current_velocity_gradients[q][0])
+							wave_speed * (current_temperature_gradients[q][0] - current_velocity_gradients[q][0])
 							+ problem.q * omega(current_temperature_values[q], current_lambda_values[q])
 						)
 
 						+ del_Le * (-grad_phi_lambda[i] * current_lambda_gradients[q])
 						+ phi_lambda[i] * (
-							D_0 * current_lambda_gradients[q][0] + omega(current_temperature_values[q], current_lambda_values[q])
+							wave_speed * current_lambda_gradients[q][0] + omega(current_temperature_values[q], current_lambda_values[q])
 						)
 
 					) * fe_values.JxW(q);
@@ -662,7 +651,7 @@ namespace TravelingWave
 			current_solution(i) = current_solution_extended(i);
 		}
 
-		current_D_0 = current_solution_extended(extended_solution_dim - 1);
+		current_wave_speed = current_solution_extended(extended_solution_dim - 1);
 	}
 
 
@@ -724,7 +713,7 @@ namespace TravelingWave
 		{
 			current_solution_extended(i) = current_solution(i);
 		}
-		current_solution_extended(extended_solution_dim - 1) = current_D_0;
+		current_solution_extended(extended_solution_dim - 1) = current_wave_speed;
 
 	}
 
@@ -770,7 +759,7 @@ namespace TravelingWave
 	}
 
 
-	void WaveConstructor::output_results_txt(const Vector<double> &solution, const double D_0, const std::string filename)
+	void WaveConstructor::output_results_txt(const Vector<double> &solution, const double wave_speed, const std::string filename)
 	{
 		TimerOutput::Scope t(computing_timer, "graphical output txt");
 
@@ -802,11 +791,11 @@ namespace TravelingWave
 
 		output.close();
 
-		// std::ofstream file_for_D_0_output("D_0_value-" + refinement_cycle_string + ".txt");
-		std::ofstream file_for_D_0_output("D_0-" + file_for_solution);
-		file_for_D_0_output << std::scientific << std::setprecision(16);
-		file_for_D_0_output << D_0 << std::endl;
-		file_for_D_0_output.close();
+		// std::ofstream file_for_wave_speed_output("wave_speed_value-" + refinement_cycle_string + ".txt");
+		std::ofstream file_for_wave_speed_output("wave_speed-" + file_for_solution);
+		file_for_wave_speed_output << std::scientific << std::setprecision(16);
+		file_for_wave_speed_output << wave_speed << std::endl;
+		file_for_wave_speed_output.close();
 
 	}
 
@@ -847,7 +836,7 @@ namespace TravelingWave
 			solution.lambda.push_back((*it)[3]);
 		}
 
-		solution.D_0 = current_D_0;
+		solution.wave_speed = current_wave_speed;
 
 	}
 
@@ -903,7 +892,7 @@ namespace TravelingWave
 
 		if (save_solution_to_file)
 		{
-			output_results_txt(current_solution, current_D_0, "solution_initial_data");
+			output_results_txt(current_solution, current_wave_speed, "solution_initial_data");
 		}
 
 		if (mesh_refinement_type == 1)		/* Compute with ADAPTIVE mesh refinement. */
@@ -930,11 +919,11 @@ namespace TravelingWave
 
 				std::string refinement_cycle_string = Utilities::int_to_string(refinement_cycle, 2);
 				const std::string file_for_solution = filename + "-" + refinement_cycle_string;
-				// output_results_txt(current_solution, current_D_0, file_for_solution);
+				// output_results_txt(current_solution, current_wave_speed, file_for_solution);
 
 				{
 					std::cout << std::scientific << std::setprecision(16);
-					std::cout << "current_D_0 = " << current_D_0 << std::endl;
+					std::cout << "current_wave_speed = " << current_wave_speed << std::endl;
 					std::cout << std::defaultfloat;
 				}
 
@@ -944,7 +933,7 @@ namespace TravelingWave
 			}
 			if (save_solution_to_file)
 			{
-				output_results_txt(current_solution, current_D_0, filename);
+				output_results_txt(current_solution, current_wave_speed, filename);
 			}
 
 		}
@@ -955,12 +944,12 @@ namespace TravelingWave
 			
 			if (save_solution_to_file)
 			{
-				output_results_txt(current_solution, current_D_0, filename);
+				output_results_txt(current_solution, current_wave_speed, filename);
 			}
 			
 			{
 				std::cout << std::scientific << std::setprecision(16);
-				std::cout << "current_D_0 = " << current_D_0 << std::endl;
+				std::cout << "current_wave_speed = " << current_wave_speed << std::endl;
 				std::cout << std::defaultfloat;
 			}
 

@@ -5,12 +5,12 @@ namespace TravelingWave
   
 	Solution::Solution() {}
 	Solution::Solution(const std::vector<double> &ix, const std::vector<double> &iu, 
-											const std::vector<double> &iT, const std::vector<double> &ilambda, double iD_0)
+											const std::vector<double> &iT, const std::vector<double> &ilambda, double iwave_speed)
 	: x(ix)
 	, u(iu)
 	, T(iT)
 	, lambda(ilambda)
-	, D_0(iD_0)
+	, wave_speed(iwave_speed)
 	{}
 	Solution::Solution(const std::vector<double> &ix, const std::vector<double> &iu, 
 											const std::vector<double> &iT, const std::vector<double> &ilambda)
@@ -19,7 +19,7 @@ namespace TravelingWave
 
 	void Solution::reinit(const unsigned int number_of_elements)
 	{
-		D_0 = 0;
+		wave_speed = 0;
 		x.clear();
 		u.clear();
 		T.clear();
@@ -44,11 +44,11 @@ namespace TravelingWave
 		}
 		output.close();
 
-		// std::ofstream file_for_D_0_output("D_0_value-" + refinement_cycle_string + ".txt");
-		std::ofstream file_for_D_0_output("D_0-" + file_for_solution);
-		file_for_D_0_output << std::scientific << std::setprecision(16);
-		file_for_D_0_output << D_0 << std::endl;
-		file_for_D_0_output.close();
+		// std::ofstream file_for_wave_speed_output("wave_speed_value-" + refinement_cycle_string + ".txt");
+		std::ofstream file_for_wave_speed_output("wave_speed-" + file_for_solution);
+		file_for_wave_speed_output << std::scientific << std::setprecision(16);
+		file_for_wave_speed_output << wave_speed << std::endl;
+		file_for_wave_speed_output.close();
 	}
 
 }

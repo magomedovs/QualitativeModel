@@ -42,7 +42,7 @@ namespace TravelingWave
 
 
   void compute_limit_sol_left_part(const Parameters &parameters, 
-                                    const double D_0, 
+                                    const double wave_speed, 
                                     const double u_0, 
                                     const double T_0, 
                                     const double lambda_0, 
