@@ -347,10 +347,6 @@ namespace TravelingWave
 			std::vector<double> phi_lambda(dofs_per_cell);
 			std::vector<Tensor<1, 1>> grad_phi_lambda(dofs_per_cell);
 			
-			std::map<double, double> temperature_at_points_around_zero;		/* pairs < coordinate, value of T > */
-			double lambda_at_zero_point(0.);
-			types::global_dof_index T_zero_point_dof_ind(0), lambda_zero_point_dof_ind(0);	/* global dof indices of dofs for T and lambda, associated with vertex \xi = 0. */
-
 			for (const auto &cell : dof_handler.active_cell_iterators())
 			{
 				cell_matrix = 0;
@@ -365,21 +361,6 @@ namespace TravelingWave
 				fe_values[velocity].get_function_gradients(evaluation_point, current_velocity_gradients);
 				fe_values[temperature].get_function_gradients(evaluation_point, current_temperature_gradients);
 				fe_values[lambda].get_function_gradients(evaluation_point, current_lambda_gradients);
-
-				for (const auto &v_ind : cell->vertex_indices())
-				{
-					if (are_equal(cell->vertex(v_ind)[0], 0.))
-					{
-						T_zero_point_dof_ind = cell->vertex_dof_index(v_ind, 1);
-						lambda_zero_point_dof_ind = cell->vertex_dof_index(v_ind, 2);
-
-						for (const auto &v_ind : cell->vertex_indices())
-						{
-							temperature_at_points_around_zero.insert({cell->vertex(v_ind)[0], current_solution(cell->vertex_dof_index(v_ind, 1))});
-						}
-						lambda_at_zero_point = current_solution(cell->vertex_dof_index(v_ind, 2));
-					}
-				}
 
 				auto kappa_1 = [=](double T, double lambda){
 					return problem.k * (1 - lambda) * std::exp(-problem.theta / T) * (
@@ -446,7 +427,7 @@ namespace TravelingWave
 						) * fe_values.JxW(q);
 					}
 
-				}											
+				}													
 	
 				cell->get_dof_indices(local_dof_indices);
 				// zero_boundary_constraints.distribute_local_to_global(cell_matrix,
@@ -472,35 +453,84 @@ namespace TravelingWave
 
 			// jacobian_matrix_extended.print_formatted(std::cout);
 
-			/* Approximating the derivative of T at \xi = 0 by a finite difference.*/
-			double T_abs_der_at_zero(0.);
-			if (temperature_at_points_around_zero.size() != 3)		/* Maybe throw some exception. */
-			{
-				std::cout << "temperature_at_points_around_zero.size() should be = 3 !" << std::endl;
-			}
-			auto it_left = temperature_at_points_around_zero.begin();
-			auto it_right = temperature_at_points_around_zero.begin();
-			std::advance(it_right, 2);
-			
-			// std::cout << it_left->first << " " << it_left->second << std::endl;
-			// std::cout << it_right->first << " " << it_right->second << std::endl;
-			T_abs_der_at_zero = std::abs( (it_right->second - it_left->second) / (it_right->first - it_left->first) );
-			// T_abs_der_at_zero = std::abs( (it_right->second - temperature_at_points_around_zero[0.]) / (it_right->first - 0.) );
+			/* Approximating the derivative of T at \xi = 0 as done in step-14.*/
 
+			types::global_dof_index T_zero_point_dof_ind(0), lambda_zero_point_dof_ind(0);	/* global dof indices of dofs for T and lambda, associated with vertex \xi = 0. */
+			double term_with_delta_func(0.);
+
+			{
+				double evaluation_point = 0.; 	/* Point at which T == T_ign */
+
+				double T_at_zero_point(0.);
+				double T_point_derivative(0.);
+				double lambda_at_zero_point(0.);
+
+				const QTrapezoid<1> quadrature_formula;
+        FEValues<1>	fe_values(fe,
+															quadrature_formula,
+															update_values | update_gradients | update_quadrature_points);
+
+				const FEValuesExtractors::Scalar temperature(1);
+				const FEValuesExtractors::Scalar lambda(2);
+				
+				const unsigned int n_q_points = quadrature_formula.size();
+				std::vector<double> current_temperature_values(n_q_points);
+				std::vector<Tensor<1, 1>> current_temperature_gradients(n_q_points);
+				std::vector<double> current_lambda_values(n_q_points);
+				
+				unsigned int evaluation_point_hits = 0;
+
+				for (const auto &cell : dof_handler.active_cell_iterators())
+				{
+          for (const auto &vertex : cell->vertex_indices())
+					{
+            if (are_equal(cell->vertex(vertex)[0], evaluation_point))
+						{
+							T_zero_point_dof_ind = cell->vertex_dof_index(vertex, 1);
+							lambda_zero_point_dof_ind = cell->vertex_dof_index(vertex, 2);
+
+							fe_values.reinit(cell);
+							fe_values[temperature].get_function_values(current_solution, current_temperature_values);
+							fe_values[temperature].get_function_gradients(current_solution, current_temperature_gradients);
+							fe_values[lambda].get_function_values(current_solution, current_lambda_values);
+
+							unsigned int q_point = 0;
+							for (; q_point < n_q_points; ++q_point)
+							{
+								if (are_equal(fe_values.quadrature_point(q_point)[0], evaluation_point))
+								{
+									break;
+								}
+							}
+
+							T_at_zero_point = current_temperature_values[q_point];
+							lambda_at_zero_point = current_lambda_values[q_point];
+							std::cout<< "T_at_zero_point=" << T_at_zero_point << std::endl;
+							std::cout<< "lambda_at_zero_point=" << lambda_at_zero_point << std::endl;
+
+							T_point_derivative += current_temperature_gradients[q_point][0];
+							++evaluation_point_hits;
+
+              break;
+						}
+					}
+				}
+				T_point_derivative /= static_cast<double>(evaluation_point_hits);
+
+				double T_abs_der_at_zero = std::abs(T_point_derivative);
+
+				term_with_delta_func = problem.k * std::exp(-problem.theta / T_at_zero_point) * (1 - lambda_at_zero_point) / T_abs_der_at_zero;
+			}
 
 			/* We now append the term with delta function, which we missed inside the loop. */
-			double term_with_delta_func = problem.k * std::exp(-problem.theta / temperature_at_points_around_zero[0.]) * (1 - lambda_at_zero_point) / T_abs_der_at_zero;
-			// jacobian_matrix_extended.add(T_zero_point_dof_ind, T_zero_point_dof_ind, problem.q * term_with_delta_func);
-			// jacobian_matrix_extended.add(lambda_zero_point_dof_ind, T_zero_point_dof_ind, term_with_delta_func);
+			jacobian_matrix_extended.add(T_zero_point_dof_ind, T_zero_point_dof_ind, problem.q * term_with_delta_func);
+			jacobian_matrix_extended.add(lambda_zero_point_dof_ind, T_zero_point_dof_ind, term_with_delta_func);
 
 			/* Modify the last row of the matrix. Add 1. to the position T_zero_point_dof_ind. */
 			jacobian_matrix_extended.add(extended_solution_dim - 1, T_zero_point_dof_ind, 1.);
 			
-			// jacobian_matrix_extended.add(extended_solution_dim - 1, lambda_zero_point_dof_ind, 1.);
-
 			zero_boundary_constraints.condense(jacobian_matrix_extended);
 
-			// jacobian_matrix_extended.print_formatted(std::cout);
 		}
 
 		{
