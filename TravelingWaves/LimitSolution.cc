@@ -38,7 +38,7 @@ namespace TravelingWave
 
   void LimitSolution::calculate_constants_A_B()
   {
-    B = T_0 - u_0 - problem.q * lambda_0;
+    B = T_0 - u_0 - problem.q * lambda_0;   // seems like "- problem.q * lambda_0" term should be removed.
     A = u_0 * (1 - wave_speed) + problem.epsilon * (u_0 * u_0  + T_0) / 2;
   }
 

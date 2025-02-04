@@ -1,0 +1,35 @@
+#	List of dimensionless parameters
+
+subsection Problem
+  set epsilon                       = 0.1
+  set Lewis number                  = 1.0     # Le
+  set Constant of reaction rate     = 1.0     # k
+  set Activation energy             = 1.65    # theta
+  set Heat release                  = 1.7     # q
+  set Ignition Temperature          = 1.0     # T_ign
+ 
+  set Type of boundary condition for the temperature at the right boundary = 1    # 0 for "Neumann"; 1 for "Dirichlet".
+  set T_left    = 2.0       # Dirichlet boundary condition.
+  set T_right   = -1.0      # Will be changed during the program (The value is expressed in terms of T_l, u_r, q, epsilon).
+
+  set u_right   = 0.05       #
+
+  set Initial guess for the wave speed = 0.2    
+
+end
+
+subsection Finite elements
+  set Polynomial degree             = 1
+  set Number of quadrature points   = 3
+end
+
+subsection Mesh
+  set Interval left boundary        = -1000	
+  set Interval right boundary       = 500
+  set Refinements number            = 10
+  set Adaptive mesh refinement      = 1     # 1 for adaptive; 0 for global.
+end
+
+subsection Solver
+  set Tolerance                     = 1e-10
+end

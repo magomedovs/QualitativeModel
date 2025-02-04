@@ -1,7 +1,7 @@
 #	List of dimensionless parameters
 
 subsection Problem
-  set delta                         = 0.01
+  set delta                         = 0.001
   set epsilon                       = 0.1
   set Prandtl number                = 0.75    # Pr
   set Lewis number                  = 1.0     # Le
@@ -10,14 +10,14 @@ subsection Problem
   set Heat release                  = 1.7     # q
   set Ignition Temperature          = 1.0     # T_ign
 
-  set Type of the wave                             = 0    # "slow" -- 0; "fast" -- 1.
+  set Type of the wave                             = 1    # "slow" -- 0; "fast" -- 1.
  
-  set Type of Temperature right boundary condition = 0    # "Neumann" -- 0; "Dirichlet" -- 1.
-  set T_left    = 2.0 #2.0 #4.3 #3.0
+  set Type of Temperature right boundary condition = 1    # "Neumann" -- 0; "Dirichlet" -- 1.
+  set T_left    = 4.3 #2.0 #4.3 #3.0
   set T_right   = 0.9
 
   set u_left = -0.1
-  set u_right = 0.05
+  set u_right = 0.0  #0.0   #0.05
 
   set wave_speed initial value = 0.2
 

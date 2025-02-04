@@ -187,13 +187,13 @@ namespace TravelingWave
 		zero_boundary_constraints.set_inhomogeneity(boundary_and_zero_dof_numbers["T_left"], 0.); //problem.T_left);
 		if (problem.T_r_bc_type == 1)	/* "Dirichlet" -- 1 */
 		{
-			std::cout << "Dirichlet boundary conditions for Temperature at the right boundary." << std::endl;
+			std::cout << "Dirichlet condition for the temperature at the right boundary." << std::endl;
 			zero_boundary_constraints.add_line(boundary_and_zero_dof_numbers["T_right"]);
 			zero_boundary_constraints.set_inhomogeneity(boundary_and_zero_dof_numbers["T_right"], 0.); //problem.T_right);
 		} /* else is "Neumann" -- 0, by default. */
 		else
 		{
-			std::cout << "Neumann boundary conditions for Temperature at the right boundary." << std::endl;
+			std::cout << "Neumann condition for the temperature at the right boundary." << std::endl;
 		}
 
 		/* Boundary condition constraints for lambda. */
@@ -459,7 +459,7 @@ namespace TravelingWave
 			double term_with_delta_func(0.);
 
 			{
-				double evaluation_point = 0.; 	/* Point at which T == T_ign */
+				double derivative_evaluation_point = 0.; 	/* Point at which T == T_ign */
 
 				double T_at_zero_point(0.);
 				double T_point_derivative(0.);
@@ -478,13 +478,13 @@ namespace TravelingWave
 				std::vector<Tensor<1, 1>> current_temperature_gradients(n_q_points);
 				std::vector<double> current_lambda_values(n_q_points);
 				
-				unsigned int evaluation_point_hits = 0;
+				unsigned int derivative_evaluation_point_hits = 0;
 
 				for (const auto &cell : dof_handler.active_cell_iterators())
 				{
           for (const auto &vertex : cell->vertex_indices())
 					{
-            if (are_equal(cell->vertex(vertex)[0], evaluation_point))
+            if (are_equal(cell->vertex(vertex)[0], derivative_evaluation_point))
 						{
 							T_zero_point_dof_ind = cell->vertex_dof_index(vertex, 1);
 							lambda_zero_point_dof_ind = cell->vertex_dof_index(vertex, 2);
@@ -497,7 +497,7 @@ namespace TravelingWave
 							unsigned int q_point = 0;
 							for (; q_point < n_q_points; ++q_point)
 							{
-								if (are_equal(fe_values.quadrature_point(q_point)[0], evaluation_point))
+								if (are_equal(fe_values.quadrature_point(q_point)[0], derivative_evaluation_point))
 								{
 									break;
 								}
@@ -509,13 +509,13 @@ namespace TravelingWave
 							std::cout<< "lambda_at_zero_point=" << lambda_at_zero_point << std::endl;
 
 							T_point_derivative += current_temperature_gradients[q_point][0];
-							++evaluation_point_hits;
+							++derivative_evaluation_point_hits;
 
               break;
 						}
 					}
 				}
-				T_point_derivative /= static_cast<double>(evaluation_point_hits);
+				T_point_derivative /= static_cast<double>(derivative_evaluation_point_hits);
 
 				double T_abs_der_at_zero = std::abs(T_point_derivative);
 
@@ -714,8 +714,8 @@ namespace TravelingWave
 			QGauss<0>( 0 /* number_of_quadrature_points */),									/* ??? */
 			{},
 			current_solution,
-			estimated_error_per_cell
-			// fe.component_mask(lambda)
+			estimated_error_per_cell,
+			fe.component_mask(lambda)
 		);
 
 		/* refine_and_coarsen_fixed_number or refine_and_coarsen_fixed_fraction */

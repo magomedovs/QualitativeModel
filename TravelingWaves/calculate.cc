@@ -22,8 +22,9 @@ void calculate_and_save_solution(TravelingWave::Parameters& parameters,
 	if (continuation_for_delta == false)
 	{
 		WaveConstructor wave(parameters, sol);
-		std::string filename = "solution_delta-" + Utilities::to_string(parameters.problem.delta) + "_eps-" 
-																											+ Utilities::to_string(parameters.problem.epsilon);
+		std::string filename = "solution_delta-" + Utilities::to_string(parameters.problem.delta) 
+																		 + "_eps-" + Utilities::to_string(parameters.problem.epsilon);
+																		//  + "_q-" + Utilities::to_string(parameters.problem.q);
 		wave.run(parameters.mesh.adaptive, parameters.mesh.refinements_number, parameters.solver.tol, filename);
 		wave.get_solution(sol);
 	}
@@ -56,8 +57,9 @@ void calculate_and_save_solution(TravelingWave::Parameters& parameters,
 		for (double delta : delta_span)
 		{
 			parameters.problem.delta = delta;
-			std::string filename = "solution_delta-" + Utilities::to_string(parameters.problem.delta) + "_eps-" 
-																									+ Utilities::to_string(parameters.problem.epsilon);
+			std::string filename = "solution_delta-" + Utilities::to_string(parameters.problem.delta) 
+																		 + "_eps-" + Utilities::to_string(parameters.problem.epsilon);
+																		//  + "_q-" + Utilities::to_string(parameters.problem.q);
 
 			WaveConstructor wave(parameters, sol);
 
